@@ -8,21 +8,20 @@ use Swoole\Http\Response;
 $enableCoroutine = getenv('ENABLE_COROUTINE') == 1;
 $connection      = $enableCoroutine ? Connections::class : Connection::class;
 
-$server  = new Server('0.0.0.0', 8080);
 $setting = [
-    'worker_num'        => swoole_cpu_num() * 4,
+    'worker_num'        => swoole_cpu_num() * ((int) getenv('CPU_MULTIPLES')),
     'log_file'          => '/dev/null',
     'enable_coroutine'  => $enableCoroutine,
-    'enable_reuse_port' => true
+    'enable_reuse_port' => true,
+    'http_compression'  => false
 ];
 
 if ($enableCoroutine) {
     $setting['hook_flags'] = SWOOLE_HOOK_ALL;
-    $setting['worker_num'] = swoole_cpu_num();
 }
 
+$server = new Server('0.0.0.0', 8080);
 $server->set($setting);
-
 
 $server->on('workerStart', function () use ($connection) {
     $connection::init(getenv('DATABASE_DRIVER'));
